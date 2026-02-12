@@ -20,6 +20,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Request logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
@@ -30,10 +36,24 @@ app.get('/', (req, res) => {
   res.json({ message: 'Threshold Alert Management System API is running' });
 });
 
+// 404 handler - must be after all routes
+app.use((req, res, next) => {
+  res.status(404).json({ 
+    success: false, 
+    message: 'Route not found',
+    requestedUrl: req.originalUrl,
+    method: req.method
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  res.status(500).json({ 
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
 const PORT = process.env.PORT || 5000;

@@ -46,7 +46,10 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json({ message: 'Please provide username and password' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Please provide username and password' 
+      });
     }
 
     const user = await User.findOne({ username });
@@ -55,14 +58,21 @@ router.post('/login', async (req, res) => {
       res.json({
         _id: user._id,
         username: user.username,
+        email: user.email,
         role: user.role,
         token: generateToken(user._id, user.role)
       });
     } else {
-      res.status(401).json({ message: 'Invalid username or password' });
+      res.status(401).json({ 
+        success: false,
+        message: 'Invalid username or password' 
+      });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 });
 
