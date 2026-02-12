@@ -8,6 +8,15 @@ const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
 };
 
+// Test endpoint to verify login route
+router.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Auth routes working',
+    loginRequires: ['username', 'password'],
+    registerRequires: ['username', 'email', 'password', 'role']
+  });
+});
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
@@ -40,21 +49,28 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// POST /api/auth/login
+// POST /api/auth/login - ONLY requires username and password
 router.post('/login', async (req, res) => {
   try {
+    console.log('Login attempt - Request body:', { ...req.body, password: '***' });
+    
     const { username, password } = req.body;
 
+    // Explicitly check only username and password
     if (!username || !password) {
+      console.log('Missing credentials');
       return res.status(400).json({ 
         success: false,
-        message: 'Please provide username and password' 
+        message: 'Please provide username and password',
+        required: ['username', 'password']
       });
     }
 
     const user = await User.findOne({ username });
+    console.log('User found:', user ? 'Yes' : 'No');
 
     if (user && (await user.matchPassword(password))) {
+      console.log('Login successful for user:', username);
       res.json({
         _id: user._id,
         username: user.username,
@@ -63,12 +79,14 @@ router.post('/login', async (req, res) => {
         token: generateToken(user._id, user.role)
       });
     } else {
+      console.log('Invalid credentials');
       res.status(401).json({ 
         success: false,
         message: 'Invalid username or password' 
       });
     }
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ 
       success: false,
       message: error.message 
