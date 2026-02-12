@@ -11,8 +11,13 @@ connectDB();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Middleware - Allow all origins for Render subdomains
+app.use(cors({
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Routes
