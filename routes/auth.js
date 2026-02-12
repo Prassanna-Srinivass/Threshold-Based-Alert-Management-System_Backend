@@ -20,24 +20,38 @@ router.get('/test', (req, res) => {
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
+    console.log('Register attempt - Request body:', { ...req.body, password: '***' });
+    
     const { username, email, password, role } = req.body;
 
     if (!username || !email || !password || !role) {
-      return res.status(400).json({ message: 'Please provide username, email, password, and role' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Please provide username, email, password, and role',
+        required: ['username', 'email', 'password', 'role']
+      });
     }
 
     if (!['OPERATOR', 'ADMIN'].includes(role)) {
-      return res.status(400).json({ message: 'Role must be OPERATOR or ADMIN' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Role must be OPERATOR or ADMIN' 
+      });
     }
 
     const userExists = await User.findOne({ $or: [{ username }, { email }] });
     if (userExists) {
-      return res.status(400).json({ message: 'User with this username or email already exists' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'User with this username or email already exists' 
+      });
     }
 
     const user = await User.create({ username, email, password, role });
+    console.log('User registered successfully:', username);
 
     res.status(201).json({
+      success: true,
       _id: user._id,
       username: user.username,
       email: user.email,
@@ -45,7 +59,11 @@ router.post('/register', async (req, res) => {
       token: generateToken(user._id, user.role)
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Register error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 });
 
